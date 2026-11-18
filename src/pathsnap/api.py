@@ -13,6 +13,7 @@ No reference-route data is used during prediction.
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -37,6 +39,22 @@ app = FastAPI(
     title="PathSnap Map-Matching API",
     description="GPS-to-road map matching backend using classifier + HMM/Viterbi",
     version="1.0.0",
+)
+
+# CORS configuration from environment variable
+# Default: no origins allowed (secure by default)
+_cors_origins = os.environ.get("PATHSNAP_CORS_ORIGINS", "")
+if _cors_origins:
+    _cors_allow_origins = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+else:
+    _cors_allow_origins = []
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_allow_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 # ---------------------------------------------------------------------------
@@ -481,4 +499,8 @@ def evaluate(req: EvaluateRequest) -> EvaluateResponse:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host=os.environ.get("PATHSNAP_HOST", "0.0.0.0"),
+        port=int(os.environ.get("PATHSNAP_PORT", "8000")),
+    )
