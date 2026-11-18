@@ -5,8 +5,15 @@ import TripSelector from "./components/TripSelector";
 import MapView from "./components/MapView";
 import ResultsPanel from "./components/ResultsPanel";
 import EvalPanel from "./components/EvalPanel";
+import MetricsPage from "./components/MetricsPage";
 
 export default function App() {
+  const [page, setPage] = useState(() => window.location.hash === "#/metrics" ? "metrics" : "predict");
+  useEffect(() => {
+    const onHashChange = () => setPage(window.location.hash === "#/metrics" ? "metrics" : "predict");
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
   const [status, setStatus] = useState("unknown");
   const [statusError, setStatusError] = useState(null);
   const [trips, setTrips] = useState([]);
@@ -107,8 +114,12 @@ export default function App() {
         </div>
         <ConnectivityStatus status={status} error={statusError} />
       </div>
+      <nav className="page-nav" aria-label="Main navigation">
+        <a href="#/predict" aria-current={page === "predict" ? "page" : undefined}>Prediction & Evaluation</a>
+        <a href="#/metrics" aria-current={page === "metrics" ? "page" : undefined}>Model Metrics</a>
+      </nav>
 
-      <div className="main">
+      {page === "metrics" ? <MetricsPage /> : <div className="main">
         <div className="sidebar">
           <div className="status-banner">
             {status === "online" ? (
@@ -162,7 +173,7 @@ export default function App() {
             <EvalPanel evalResult={evaluation} />
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

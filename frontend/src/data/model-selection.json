@@ -1,0 +1,11 @@
+{
+  "source": "experiments/phase3a/selected_model.json",
+  "recommended_model": "hist_gradient_boosting",
+  "recommended_from_trial": 49,
+  "basis": "Training-only cross-validation; student-testing was not used for selection.",
+  "comparison": [
+    {"model": "hist_gradient_boosting", "best_top1": 0.8772270167391177, "std_top1": 0.02959678629451098, "mean_logloss": 0.09952429685547155},
+    {"model": "random_forest", "best_top1": 0.8772268408253648, "std_top1": 0.029394467970521147, "mean_logloss": 0.09821021429335286},
+    {"model": "mlp", "best_top1": 0.8749728426616753, "std_top1": 0.030020615111877855, "mean_logloss": 0.10283699722155648}
+  ]
+}
