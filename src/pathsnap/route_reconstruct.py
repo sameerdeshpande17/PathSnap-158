@@ -44,9 +44,9 @@ class ReconstructedRoute:
     trip_id: str
     n_observations: int
     n_decoded_arcs: int
-    n_route_segments: int
-    n_connector_segments: int
-    total_length_m: float
+    n_route_segments: int = 0
+    n_connector_segments: int = 0
+    total_length_m: float = 0.0
     segments: list[RouteSegment] = field(default_factory=list)
     # Arc ID sequence (traversal order, includes connectors)
     arc_id_sequence: list[int] = field(default_factory=list)

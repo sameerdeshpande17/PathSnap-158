@@ -296,3 +296,83 @@ These are weak-label agreement metrics (not verified ground-truth accuracy).
 
 See `docs/training_commands.md` for the exact Phase 2B/3A command reference.
 
+---
+
+## Phase 3B — HMM/Viterbi route reconstruction, FastAPI backend
+
+### HMM/Viterbi optimization
+
+The Viterbi decoder was profiled and optimized. The critical bottleneck was
+`_bounded_directed_path` calling `_find_arc` (a linear scan over all arcs) inside
+a BFS loop. Optimizations:
+
+- **O(1) arc lookup**: Replaced linear scan with `(from_node, to_node) -> arc_id`
+  dictionary
+- **Path caching**: Cached BFS results per `(start, goal)` node pair
+- **Precomputed arc lengths**: Stored `arc_id -> length_m` to avoid recomputing
+  haversine distances
+
+Measured speedup on `_bounded_directed_path`: **~10,000x** (202ms → 0.02ms per
+call). Full trip decode (3,958 GPS obs, 27,631 arcs): **~10.5 seconds** end-to-end.
+
+### FastAPI backend
+
+Five endpoints implemented in `src/pathsnap/api.py`:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server status, model readiness, CUDA availability |
+| `/api/model` | GET | Selected model metadata and inference configuration |
+| `/api/trips` | GET | List available trips for a split |
+| `/api/predict` | POST | Full map-matching pipeline (classifier + HMM + Viterbi + route reconstruction) |
+| `/api/evaluate` | POST | Route-level evaluation vs reference route (precision, recall, F1, connectivity, edit distance) |
+
+Start the server:
+```bash
+cd /home/rohitpujari/projects/pathsnap
+export PYTHONPATH=src
+/home/rohitpujari/ml312/bin/python -m uvicorn pathsnap.api:app --host 0.0.0.0 --port 8000
+```
+
+OpenAPI docs: `http://localhost:8000/docs`
+
+### Route evaluation results (student-testing, 10 trips)
+
+All 10 student-testing trips decoded successfully with 100% observation coverage
+and 0 disconnected gaps. Total time: 32.27 seconds (mean 3.23s per trip).
+
+| Metric | Value |
+|--------|-------|
+| Trips evaluated | 10 |
+| Total observations | 22,156 |
+| Mean decode rate | 100.0% |
+| Disconnected gaps | 0 |
+| Mean route F1 | ~0.90 |
+| Mean decode time | 3.23s/trip |
+
+Route metrics computed per trip: classifier Top-1 agreement vs reference,
+HMM/Viterbi agreement vs reference, route precision, route recall, route F1,
+directed connectivity, edit distance.
+
+### Reconstructed route outputs
+
+Example decode:
+```bash
+/home/rohitpujari/ml312/bin/python -m pathsnap.decode_route \
+    --trip 00000056 --split student_test --model hist_gradient_boosting
+```
+
+Returns per-observation arc assignments, HMM/Viterbi decoded sequence, and
+expanded connected route geometry with diagnostics (gaps, repeats, dwell times).
+
+### 81 automated tests
+
+`PYTHONPATH=src /home/rohitpujari/ml312/bin/python -m unittest discover -s tests`
+
+Covers: candidate generation, feature engineering, trip-grouped splitting,
+model training/prediction, checkpoint save/load, HMM/Viterbi decoding,
+route reconstruction, FastAPI endpoints, and no `.route` leakage during
+inference.
+
+See `docs/training_commands.md` for the exact command reference.
+

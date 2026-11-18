@@ -170,3 +170,100 @@ Charts go to `visualizations/phase2b/`; PDF to `docs/phase2b_model_report.pdf`.
 ## Weak-supervision provenance
 
 Targets come from the frozen Phase 2A screened B/C-consensus labels. They are **weak/inferred supervision**, not verified ground truth. No model training has been executed by this pipeline yet — run the commands above when ready.
+
+---
+
+# Phase 3B — HMM/Viterbi route reconstruction, FastAPI backend
+
+## 10. HMM/Viterbi route reconstruction
+
+Decode GPS trips into connected road-arc sequences using the trained classifier + HMM + Viterbi:
+
+```bash
+# Decode a single trip (no .route accessed)
+/home/rohitpujari/ml312/bin/python -m pathsnap.decode_route \
+    --model hist_gradient_boosting --trip 00000056 --split student_test
+
+# Save output to a file
+/home/rohitpujari/ml312/bin/python -m pathsnap.decode_route \
+    --model hist_gradient_boosting --trip 00000056 --split student_test \
+    --output /tmp/trip_00000056.json
+```
+
+## 11. Route-level evaluation
+
+Evaluate classifier vs HMM/Viterbi predictions against reference routes:
+
+```bash
+# Evaluate a single trip
+/home/rohitpujari/ml312/bin/python -m pathsnap.evaluate_routes \
+    --model hist_gradient_boosting --trip 00000056 --split student_test \
+    --output-csv experiments/phase3b/route_eval_00000056.csv \
+    --output-json experiments/phase3b/route_eval_00000056.json
+
+# Evaluate all 10 student-testing trips
+/home/rohitpujari/ml312/bin/python -m pathsnap.evaluate_routes \
+    --model hist_gradient_boosting --split student_test \
+    --output-csv experiments/phase3b/route_evaluation.csv \
+    --output-json experiments/phase3b/route_evaluation.json
+```
+
+## 12. Route report
+
+Generate charts and PDF from saved route evaluation outputs:
+
+```bash
+/home/rohitpujari/ml312/bin/python -m pathsnap.report_routes
+/home/rohitpujari/ml312/bin/python -m pathsnap.report_routes --no-pdf
+/home/rohitpujari/ml312/bin/python -m pathsnap.report_routes \
+    --output docs/phase3b_route_report.pdf
+```
+
+Charts go to `visualizations/phase3b/`; PDF to `docs/phase3b_route_report.pdf`.
+
+## 13. FastAPI backend
+
+Start the server:
+
+```bash
+cd /home/rohitpujari/projects/pathsnap
+export PYTHONPATH=src
+/home/rohitpujari/ml312/bin/python -m uvicorn pathsnap.api:app --host 0.0.0.0 --port 8000
+```
+
+Endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server status, model readiness, CUDA availability |
+| `/api/model` | GET | Selected model metadata and inference configuration |
+| `/api/trips` | GET | List available trips for a split |
+| `/api/predict` | POST | Full map-matching pipeline |
+| `/api/evaluate` | POST | Route-level evaluation vs reference route |
+
+Example:
+```bash
+curl -X POST http://localhost:8000/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{"trip_id": "00000056", "split": "student_test"}'
+
+curl http://localhost:8000/health
+curl http://localhost:8000/api/model
+curl "http://localhost:8000/api/trips?split=student_test"
+```
+
+OpenAPI docs: `http://localhost:8000/docs`
+
+## Expected CPU/GPU usage per model
+
+| Model | Device | Notes |
+|---|---|---|
+| Logistic Regression | CPU | `lbfgs`, fast, small memory |
+| K-Nearest Neighbors | CPU | `ball_tree`; prediction cost grows with training set size |
+| Random Forest | CPU | 100 trees, `n_jobs=4`, moderate memory |
+| HistGradientBoosting | CPU | 150 iterations, no early stopping by default |
+| MLP | CUDA (or CPU fallback) | 2-layer, epoch logging, early stopping, best-checkpoint restore |
+
+## Weak-supervision provenance
+
+Targets come from the frozen Phase 2A screened B/C-consensus labels. They are **weak/inferred supervision**, not verified ground truth. No model training has been executed by this pipeline yet — run the commands above when ready.

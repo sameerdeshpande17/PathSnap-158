@@ -92,6 +92,9 @@ class MapMatchingHMM:
         self._adjacency: dict[int, set[int]] = {}  # from_node -> set of to_node
         self._reverse_adjacency: dict[int, set[int]] = {}  # to_node -> set of from_node
         self._directed_arcs: dict[int, tuple[int, int]] = {}  # arc_id -> (from_node, to_node)
+        self._arc_lookup: dict[tuple[int, int], int] = {}  # (from_node, to_node) -> arc_id (O(1) lookup)
+        self._arc_lengths: dict[int, float] = {}  # arc_id -> length in metres (precomputed)
+        self._path_cache: dict[tuple[int, int], list[int] | None] = {}  # (from_node, to_node) -> path
         self._connected_components: dict[int, int] = {}  # node -> component id
         self._component_arcs: dict[int, set[int]] = {}  # component -> set of arc_ids
 
@@ -105,16 +108,22 @@ class MapMatchingHMM:
         arcs: (M, 2) array of [from_node_id, to_node_id]
         """
         self._node_coords = {i: (float(nodes[i, 0]), float(nodes[i, 1])) for i in range(len(nodes))}
-        self._directed_arcs = {int(a[0]): (int(a[0]), int(a[1])) for a in arcs}
-        # Actually arcs rows are [from_node, to_node]
         self._directed_arcs = {i: (int(arcs[i, 0]), int(arcs[i, 1])) for i in range(len(arcs))}
 
         self._adjacency = {}
         self._reverse_adjacency = {}
+        self._arc_lookup = {}
+        self._arc_lengths = {}
+        self._path_cache = {}
         for i in range(len(arcs)):
             f, t = int(arcs[i, 0]), int(arcs[i, 1])
             self._adjacency.setdefault(f, set()).add(t)
             self._reverse_adjacency.setdefault(t, set()).add(f)
+            self._arc_lookup[(f, t)] = i
+            # Precompute arc length
+            lon1, lat1 = self._node_coords[f]
+            lon2, lat2 = self._node_coords[t]
+            self._arc_lengths[i] = self._haversine_m(lat1, lon1, lat2, lon2)
 
         # Weakly connected components (undirected)
         self._compute_components(arcs)
@@ -287,16 +296,21 @@ class MapMatchingHMM:
 
         Bounded BFS to avoid unbounded search on large networks.
         Returns list of arc IDs, or None if no path within max_edges.
+        Results are cached per (start, goal) pair to avoid recomputation.
         """
         if start == goal:
             return []
 
-        # BFS over nodes, tracking arc IDs used
+        cache_key = (start, goal)
+        if cache_key in self._path_cache:
+            return self._path_cache[cache_key]
+
         from collections import deque
 
         visited = {start}
         queue = deque([(start, [])])  # (node, path_of_arc_ids)
 
+        result = None
         while queue:
             node, path = queue.popleft()
             if len(path) >= max_edges:
@@ -304,35 +318,29 @@ class MapMatchingHMM:
             for to_node in self._adjacency.get(node, ()):
                 if to_node in visited:
                     continue
-                # Find arc(s) from node to to_node
                 arc_id = self._find_arc(node, to_node)
                 if arc_id is None:
                     continue
                 new_path = path + [arc_id]
                 if to_node == goal:
-                    return new_path
+                    result = new_path
+                    queue.clear()
+                    break
                 visited.add(to_node)
                 queue.append((to_node, new_path))
 
-        return None
+        self._path_cache[cache_key] = result
+        return result
 
     def _find_arc(self, from_node: int, to_node: int) -> int | None:
-        """Find an arc ID from from_node to to_node (first match)."""
-        for arc_id, (f, t) in self._directed_arcs.items():
-            if f == from_node and t == to_node:
-                return arc_id
-        return None
+        """Find an arc ID from from_node to to_node (O(1) lookup)."""
+        return self._arc_lookup.get((from_node, to_node))
 
     def _path_length_m(self, path: list[int]) -> float:
-        """Sum of segment lengths for a list of arc IDs."""
-        # We need segment lengths; stored via candidate states or compute here.
-        # For simplicity, estimate from node coordinates.
+        """Sum of segment lengths for a list of arc IDs (uses precomputed lengths)."""
         total = 0.0
         for arc_id in path:
-            f, t = self._directed_arcs[arc_id]
-            lon1, lat1 = self._node_coords[f]
-            lon2, lat2 = self._node_coords[t]
-            total += self._haversine_m(lat1, lon1, lat2, lon2)
+            total += self._arc_lengths.get(arc_id, 0.0)
         return total
 
     @staticmethod
