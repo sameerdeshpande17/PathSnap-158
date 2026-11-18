@@ -34,26 +34,35 @@ export default function MapView({
           <Popup>GPS observations ({gpsPoints.length} points)</Popup>
         </Polyline>
       )}
-      {predictedArcs.length > 0 && predictedArcs.every((a) => Array.isArray(a) && a.length === 2) && (
-        <Polyline
-          positions={predictedArcs.map((p) => [p[1], p[0]])}
-          color="#e74c3c"
-          weight={4}
-          opacity={0.9}
+      {/* predictedArcs is an array of arc IDs (integers), not coordinates.
+          We cannot draw them without node coordinates. Show info instead. */}
+      {predictedArcs.length > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: 20,
+            zIndex: 1000,
+            background: "rgba(255, 255, 255, 0.9)",
+            padding: "10px 14px",
+            borderRadius: 6,
+            border: "1px solid #e74c3c",
+            color: "#c62828",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            maxWidth: "300px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
         >
-          <Popup>Predicted route ({predictedArcs.length} arcs)</Popup>
-        </Polyline>
-      )}
-      {showReference && referenceArcs.length > 0 && referenceArcs.every((a) => Array.isArray(a) && a.length === 2) && (
-        <Polyline
-          positions={referenceArcs.map((p) => [p[1], p[0]])}
-          color="#2ecc71"
-          weight={4}
-          opacity={0.5}
-          dashArray="10, 5"
-        >
-          <Popup>Reference route ({referenceArcs.length} arcs)</Popup>
-        </Polyline>
+          <div style={{ fontWeight: 700, marginBottom: 6, color: "#c62828" }}>
+            Predicted Route ({predictedArcs.length} arcs)
+          </div>
+          <div style={{ fontSize: "0.75rem", fontFamily: "monospace" }}>
+            {predictedArcs.slice(0, 10).join(", ")}
+            {predictedArcs.length > 10 ? ` … (+${predictedArcs.length - 10} more)` : ""}
+          </div>
+        </div>
       )}
     </MapContainer>
   );

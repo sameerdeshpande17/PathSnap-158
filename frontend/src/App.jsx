@@ -81,6 +81,7 @@ export default function App() {
     if (!selectedTrip) return;
     setEvaluating(true);
     setError(null);
+    setPrediction(null);
     try {
       const res = await evaluateTrip(selectedTrip, "student_test");
       setEvaluation(res);
@@ -97,10 +98,6 @@ export default function App() {
     setEvaluation(null);
     setError(null);
   };
-
-  // Extract GPS points from prediction (we don't have raw GPS in the response,
-  // but we can show the predicted route arc sequence as geometry markers)
-  // The predict endpoint returns arc_ids, not coordinates. We'll show what we have.
 
   return (
     <div className="app">
@@ -129,7 +126,7 @@ export default function App() {
             )}
           </div>
 
-          <TripSelector onSelect={setSelectedTrip} />
+          <TripSelector onSelect={handleTripSelect} />
 
           <div style={{ marginTop: 12 }}>
             <button
