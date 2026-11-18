@@ -1,0 +1,35 @@
+source,section,requirement,stage,status,evidence_or_next_step
+Main Guidelines,1-4,Understand challenge and both laptop responsibilities,Phase 1,complete,docs/methodology.md and docs/api_contract.md
+Dataset Exploration,3-4,Verify schema IDs availability sizes and counts,Phase 1,complete,src/pathsnap/data.py and experiments/file_inventory.csv
+Dataset Exploration,4,Inspect all permitted trips and GPS/node/arc/route counts,Phase 1,complete,experiments/trip_statistics.csv
+Dataset Exploration,4,Missing invalid duplicate coordinates and timestamp anomalies,Phase 1,complete,experiments/trip_statistics.csv and parsing_errors.json
+Dataset Exploration,4-5,Coordinate order extents geodesic distances and projection choice,Phase 1,complete,docs/methodology.md and experiments/projection_validation.json
+Dataset Exploration,4,Directed connectivity isolated nodes and reference continuity,Phase 1,complete,experiments/trip_statistics.csv
+Dataset Exploration,6,Investigate reference format and uncertainty,Phase 1,complete,docs/methodology.md; aligned labels still unresolved
+Dataset Exploration,7,Separate train student-test and evaluator data,All,complete,explicit split allowlist; no evaluator data present
+Dataset Exploration,8,Inventory statistics plots and Folium maps,Phase 1,complete,experiments/ and visualizations/
+Deliverables,2.2,Preprocessing patterns missing-value analysis and feature rationale,Phase 1,complete,docs/phase1_report.pdf and docs/methodology.md
+Deliverables,1,Organized reproducible repository and dependencies,Phase 1,complete,README.md requirements.txt requirements.lock.txt
+Deliverables,1,Public GitHub complete source artifacts and evaluator access,Final,pending,Requires user publication instruction
+Deliverables,1-2,One consolidated PDF with sections 2-7 and actual evidence,Final,partial,Phase 1 PDF only; final sections pending experiments
+Models and Training Guidelines,2-6,Train and compare at least five models across families,Later,pending,Do not train final models in Phase 1
+Models and Training Guidelines,4,Record configurations seeds folds timing and experiment logs,Later,planned,docs/methodology.md
+Models and Training Guidelines,5-6,Report applicable classification candidate Top-1 coverage and sequence metrics,Later,blocked,Defensible observation alignment needed
+Deliverables,3.1,Consolidated five-model comparison CV and student-test table,Later,pending,Requires genuine training results
+Deliverables,3.2,Each model suitability limitations hyperparameters objective performance and fit diagnosis,Later,pending,Requires genuine training results
+Deliverables,3.3,CV Macro F1 student-test Top-1/F1 log-loss comparison plots,Later,pending,Only actual results; confusion matrices optional
+Deliverables,3.3,Epoch histories only for models that produce them,Later,pending,No fabricated curves
+Models and Training Guidelines,7,Bayesian search rationale objective training group-CV and trial history,Later,pending,docs/methodology.md design
+Deliverables,4,Best parameters refit cost and tuned-versus-untuned comparison,Later,pending,Same metrics and partitions required
+Models and Training Guidelines,8-9,States candidate mapping emissions transitions Viterbi gaps and invalid transitions,Later,pending,docs/methodology.md design
+Deliverables,5,Classifier-only versus HMM pointwise sequence continuity comparison,Later,pending,Geometric baseline is not a classifier
+Deliverables,6,Distinguishable GPS road reference and prediction map layers legend extent controls,Phase 1,complete,visualizations/train_*.html; baseline explicitly labelled
+Deliverables,6,Representative geographical map screenshot in PDF and reproducible map code,Phase 1,complete,docs/phase1_report.pdf and src/pathsnap/render_maps.py
+Models and Training Guidelines,5,Final trained model preprocessing decoder and inference assets,Later,pending,artifacts/ reserved
+Main Guidelines,3,Two-laptop FastAPI/UI integration,Later,planned,docs/api_contract.md
+Models and Training Guidelines,6 Final Evaluation,UI lists all ten evaluator trips and sends selected ID through API,Final,pending,Evaluator partition not supplied; frontend on second laptop
+Models and Training Guidelines,6 Final Evaluation,Server-side scoring no reference leakage no hardcoded predictions API logs,Final,planned,docs/api_contract.md
+Deliverables,7,Working UI and receiving-laptop API screenshots matching submitted code,Final,pending,No working API/UI claimed
+Assessment and Plagiarism Policy,3-7,Independent experiments reproducible metrics no sharing or leakage,All,complete,Local execution provenance; ongoing obligation
+Assessment and Plagiarism Policy,5-6,Disclose AI assistance and prepare technical viva,All,partial,Disclosure in methodology; team review and viva preparation required
+User request,Phase 1 package,Inspect supplied package and independently verify findings,Phase 1,blocked,Package not located; provide exact path
