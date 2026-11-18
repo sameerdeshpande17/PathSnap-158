@@ -20,7 +20,7 @@ export default function MapView({
   return (
     <MapContainer
       center={[49.844, 8.595]}
-      zoom={14}
+      zoom={13}
       style={{ height: "100%", width: "100%" }}
     >
       <TileLayerRef />
@@ -34,7 +34,7 @@ export default function MapView({
           <Popup>GPS observations ({gpsPoints.length} points)</Popup>
         </Polyline>
       )}
-      {predictedArcs.length > 0 && (
+      {predictedArcs.length > 0 && predictedArcs.every((a) => Array.isArray(a) && a.length === 2) && (
         <Polyline
           positions={predictedArcs.map((p) => [p[1], p[0]])}
           color="#e74c3c"
@@ -44,7 +44,7 @@ export default function MapView({
           <Popup>Predicted route ({predictedArcs.length} arcs)</Popup>
         </Polyline>
       )}
-      {showReference && referenceArcs.length > 0 && (
+      {showReference && referenceArcs.length > 0 && referenceArcs.every((a) => Array.isArray(a) && a.length === 2) && (
         <Polyline
           positions={referenceArcs.map((p) => [p[1], p[0]])}
           color="#2ecc71"

@@ -76,6 +76,16 @@ export default function ResultsPanel({ result }) {
           <span className="value">{result.timing_s?.total?.toFixed(3)} s</span>
         </div>
       </div>
+      <div className="card">
+        <h3>Predicted Arc IDs</h3>
+        <div className="row">
+          <span className="label">Sequence</span>
+          <span className="value" style={{ fontSize: "0.75rem", wordBreak: "break-all" }}>
+            {result.arc_id_sequence?.slice(0, 20).join(", ")}
+            {result.arc_id_sequence.length > 20 ? ` … (+${result.arc_id_sequence.length - 20} more)` : ""}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
